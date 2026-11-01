@@ -1,0 +1,37 @@
+{
+  "backend": "walrus",
+  "simulatedChain": false,
+  "seeded": 15,
+  "rows": [
+    {
+      "scenario": "Poisoned lookalike of landlord",
+      "expected": "BLOCK",
+      "memoryOff": "WARN",
+      "memoryOn": "BLOCK",
+      "reasonOn": "Looks like \"Ada (landlord)\" (0xa1b2c3…e500) but is a different address."
+    },
+    {
+      "scenario": "Normal rent to the real address",
+      "expected": "ALLOW",
+      "memoryOff": "WARN",
+      "memoryOn": "ALLOW",
+      "reasonOn": "Address holds almost no SUI (checked live through Tatum)."
+    },
+    {
+      "scenario": "Huge payment to new, empty address",
+      "expected": "WARN/BLOCK",
+      "memoryOff": "WARN",
+      "memoryOn": "BLOCK",
+      "reasonOn": "First time paying this address."
+    },
+    {
+      "scenario": "Same address after owner rejected it",
+      "expected": "BLOCK",
+      "memoryOff": "WARN",
+      "memoryOn": "BLOCK",
+      "reasonOn": "Address was flagged as a scam earlier."
+    }
+  ],
+  "okOff": 1,
+  "okOn": 4
+}

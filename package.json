@@ -1,0 +1,23 @@
+{
+  "name": "wallet-guardian",
+  "version": "0.1.0",
+  "description": "A wallet guardian that learns your payment habits on Walrus Memory and checks addresses through Tatum (Total Recall hackathon).",
+  "type": "module",
+  "scripts": {
+    "demo": "node src/demo.js",
+    "check": "node src/cli.js",
+    "test": "node --test test/guardian.test.js",
+    "smoke": "node --env-file=.env scripts/smoke.js",
+    "demo:live": "node --env-file=.env src/demo.js",
+    "check:live": "node --env-file=.env src/cli.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.7",
+    "@grpc/proto-loader": "^0.8.1",
+    "@mysten-incubation/memwal": "latest"
+  }
+}
