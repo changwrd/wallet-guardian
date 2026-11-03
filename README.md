@@ -100,7 +100,7 @@ node --env-file=.env src/cli.js check <address> <amountSui>
 node --env-file=.env src/server.js
 ```
 
-Open http://localhost:3000. Check a payment with memory on or off, then teach the guardian (trust or flag an address). The page binds to `127.0.0.1` and refuses other hosts and origins. **Do not deploy it publicly**: it runs on your Walrus and Tatum keys.
+Open http://localhost:3000. Check a payment with memory on or off, then teach the guardian (trust or flag an address). The page binds to `127.0.0.1` and refuses other hosts and origins. It runs locally with your own keys by design (bring-your-own-key). A hosted version would add sign-in and a separate Walrus delegate key for each user, so no shared key is ever exposed.
 
 ## Project structure
 
@@ -138,6 +138,7 @@ Open http://localhost:3000. Check a payment with memory on or off, then teach th
 - Memory is built from demo data, not a real payment history.
 - "Active address" currently means "holds at least 0.001 SUI". Transaction-history signals are a next step.
 - Roadmap: wallet integration (check before signing), importing real payment history, Seal-encrypted memory, and payments between agents.
+- Production path: hosted API with user sign-in, one Walrus delegate key per user, rate limits, and wallet integration for check-before-sign.
 
 ## License
 
