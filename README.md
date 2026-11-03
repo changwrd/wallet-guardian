@@ -146,6 +146,6 @@ Apache-2.0 (see `package.json`).
 
 ## Demo video
 
-[![Watch the demo](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://youtu.be/OklaS6BWpV4?si=mkriC4j8apkfTWvm)
+[![Watch the demo](https://img.youtube.com/vi/OklaS6BWpV4/hqdefault.jpg)](https://youtu.be/OklaS6BWpV4)
 
 _(walkthrough: memory off vs on, teaching the guardian, Walrus proof.)_
