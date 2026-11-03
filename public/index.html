@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wallet Guardian</title>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --card: #fff;
+        --text: #14171c;
+        --muted: #5b6472;
+        --line: #dde1e7;
+        --accent: #2457d6;
+        --ok: #17653a;
+        --okbg: #e3f5ea;
+        --warn: #7a4b00;
+        --warnbg: #fff1d6;
+        --bad: #9b1c1c;
+        --badbg: #fde4e4;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #101318;
+          --card: #1a1f27;
+          --text: #eef1f5;
+          --muted: #9aa4b2;
+          --line: #2c3440;
+          --accent: #7aa2ff;
+          --ok: #7be0a3;
+          --okbg: #14301f;
+          --warn: #ffcf70;
+          --warnbg: #3a2c0d;
+          --bad: #ff9b9b;
+          --badbg: #3b1717;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.5 system-ui,
+          Segoe UI,
+          sans-serif;
+      }
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 26px;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 20px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        font-size: 14px;
+        color: var(--muted);
+        margin: 10px 0 4px;
+      }
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        font: inherit;
+      }
+      button {
+        font: inherit;
+        padding: 9px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--text);
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 12px;
+      }
+      .chips button {
+        font-size: 14px;
+        padding: 6px 10px;
+      }
+      .verdict {
+        border-radius: 10px;
+        padding: 14px;
+        margin-top: 14px;
+      }
+      .ALLOW {
+        background: var(--okbg);
+        color: var(--ok);
+      }
+      .WARN {
+        background: var(--warnbg);
+        color: var(--warn);
+      }
+      .BLOCK {
+        background: var(--badbg);
+        color: var(--bad);
+      }
+      .verdict b {
+        font-size: 22px;
+      }
+      .verdict ul {
+        margin: 8px 0 0;
+        padding-left: 20px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      code {
+        font-size: 13px;
+        word-break: break-all;
+      }
+      .hide {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Wallet Guardian</h1>
+      <p class="sub">
+        Paste before you pay. It remembers who you pay on Walrus Memory and
+        checks the address live through Tatum.
+      </p>
+      <div class="card">
+        <div class="muted" id="status">Connecting…</div>
+        <label for="to">Destination address</label
+        ><input
+          type="text"
+          id="to"
+          placeholder="0x… (64 hex characters)"
+          autocomplete="off"
+        />
+        <label for="amt">Amount (SUI)</label
+        ><input type="number" id="amt" value="12" min="0" step="any" />
+        <div class="row chips" id="presets"></div>
+        <div class="row">
+          <label style="margin: 0"
+            ><input type="checkbox" id="mem" checked /> Use memory</label
+          >
+          <button class="primary" id="go">Check payment</button>
+        </div>
+        <div id="out" class="hide"></div>
+      </div>
+      <div class="card hide" id="fb">
+        <b>Teach the guardian</b>
+        <p class="muted">
+          Your answer is written to Walrus Memory and changes the next verdict.
+        </p>
+        <p class="muted">Address: <code id="who"></code></p>
+        <label for="lab">Name for this person (if you trust them)</label
+        ><input type="text" id="lab" placeholder="e.g. Chidi" />
+        <div class="row">
+          <button id="yes">I trust this address</button
+          ><button id="no">This is a scam</button>
+        </div>
+        <div id="saved" class="muted" style="margin-top: 10px"></div>
+      </div>
+      <div class="card">
+        <b>Proof on Walrus</b>
+        <div class="muted" id="ledger">Loading…</div>
+      </div>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      async function api(p, b) {
+        const r = await fetch(
+          p,
+          b
+            ? {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(b),
+              }
+            : undefined,
+        );
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || "Request failed");
+        return j;
+      }
+      function body() {
+        return {
+          to: $("to").value.trim(),
+          amountSui: $("amt").value,
+          useMemory: $("mem").checked,
+        };
+      }
+      async function ledger() {
+        try {
+          const l = await api("/api/ledger");
+          const c = $("ledger");
+          c.textContent =
+            l.verified +
+            " verified writes (" +
+            l.unverified +
+            " unverified). Latest blob IDs:";
+          const ul = document.createElement("ul");
+          for (const w of l.recent) {
+            const li = document.createElement("li");
+            const k = document.createElement("code");
+            k.textContent = w.kind + ": " + (w.blobId || "no blob id");
+            li.appendChild(k);
+            ul.appendChild(li);
+          }
+          c.appendChild(ul);
+        } catch (e) {
+          $("ledger").textContent = e.message;
+        }
+      }
+      (async () => {
+        try {
+          const i = await api("/api/info");
+          $("status").textContent =
+            "Memory: " + i.memory + "  |  Chain: " + i.chain;
+          for (const p of i.presets) {
+            const b = document.createElement("button");
+            b.textContent = p.name;
+            b.onclick = () => {
+              $("to").value = p.to;
+              $("amt").value = p.amountSui;
+              $("out").className = "hide";
+              $("fb").className = "card hide";
+            };
+            $("presets").appendChild(b);
+          }
+        } catch (e) {
+          $("status").textContent = e.message;
+        }
+        ledger();
+      })();
+      $("go").onclick = async () => {
+        $("go").disabled = true;
+        const o = $("out");
+        o.className = "muted";
+        o.textContent = "Checking Walrus memory and Tatum…";
+        try {
+          const r = await api("/api/check", body());
+          o.className = "verdict " + r.decision;
+          o.textContent = "";
+          const t = document.createElement("b");
+          t.textContent = r.decision + " (risk " + r.score + ")";
+          o.appendChild(t);
+          const m = document.createElement("div");
+          m.className = "muted";
+          m.style.color = "inherit";
+          m.textContent =
+            "Memory: " +
+            (r.usedMemory ? "on" : "off") +
+            " | Chain check: " +
+            r.chain;
+          o.appendChild(m);
+          const ul = document.createElement("ul");
+          (r.reasons.length ? r.reasons : ["No risk signals found."]).forEach(
+            (x) => {
+              const li = document.createElement("li");
+              li.textContent = x;
+              ul.appendChild(li);
+            },
+          );
+          o.appendChild(ul);
+          $("who").textContent = $("to").value.trim();
+          $("fb").className = "card";
+        } catch (e) {
+          o.className = "verdict BLOCK";
+          o.textContent = e.message;
+        }
+        $("go").disabled = false;
+      };
+      async function fb(v) {
+        $("saved").textContent = "Writing to Walrus…";
+        try {
+          const r = await api("/api/feedback", {
+            ...body(),
+            verdict: v,
+            label: $("lab").value,
+          });
+          $("saved").textContent =
+            "Saved: " +
+            r.saved
+              .map((s) =>
+                s.backend === "walrus"
+                  ? "blob " +
+                    (s.blobId || "pending") +
+                    (s.verified ? " (recall-verified)" : " (not yet verified)")
+                  : "stored locally",
+              )
+              .join("; ");
+          ledger();
+        } catch (e) {
+          $("saved").textContent = e.message;
+        }
+      }
+      $("yes").onclick = () => fb("confirm");
+      $("no").onclick = () => fb("reject");
+    </script>
+  </body>
+</html>
